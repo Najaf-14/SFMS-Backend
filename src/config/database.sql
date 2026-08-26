@@ -67,3 +67,25 @@ INSERT INTO roles (name, description) VALUES
 ('ADMIN', 'Manages students, parents, classes, and fee structure'),
 ('VIEWER', 'Read-only access')
 ON CONFLICT (name) DO NOTHING;
+
+-- 7. FAMILIES TABLE
+CREATE TABLE IF NOT EXISTS families (
+    id SERIAL PRIMARY KEY,
+    family_id_code VARCHAR(50) UNIQUE NOT NULL,
+    father_parent_name VARCHAR(150) NOT NULL,
+    mother_name VARCHAR(150),
+    cnic VARCHAR(30),
+    father_contact VARCHAR(30) NOT NULL,
+    mother_contact VARCHAR(30),
+    whatsapp_number VARCHAR(30),
+    email VARCHAR(255),
+    address TEXT,
+    emergency_contact VARCHAR(50),
+    notes TEXT,
+    admission_date DATE DEFAULT CURRENT_DATE,
+    family_concession NUMERIC(10, 2) DEFAULT 0.00,
+    scholarship_info TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
