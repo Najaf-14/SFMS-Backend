@@ -21,22 +21,23 @@ const register = async (req, res) => {
     const { name, email, password, roleId } = req.body;
 
     if (!name || !email || !password || !roleId) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ error: "All fields are required." });
     }
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
-      return res.status(400).json({ error: "Email already exists" });
+      return res.status(400).json({ error: "Email already registered." });
     }
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
     const newUser = await createUser(name, email, passwordHash, roleId);
+    return res
+      .status(201)
+      .json({ message: "User created successfully", user: newUser });
   } catch (error) {
-    return res.status(500).json({
-      error: error.message,
-    });
+    return res.status(500).json({ error: error.message });
   }
 };
 
