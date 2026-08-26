@@ -29,4 +29,5 @@ const initDB = async () => {
     console.error("Error initializing database:", error.message);
   }
 };
+
 module.exports = { pool, initDB };
