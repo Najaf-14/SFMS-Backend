@@ -7,12 +7,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const { initDB } = require("./src/config/db");
+
 //Test API
 app.get("/", (req, res) => {
   res.json({
     message: "School API is running ",
   });
 });
+
+initDB();
 
 const PORT = process.env.PORT || 5000;
 
