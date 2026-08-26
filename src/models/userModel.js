@@ -1,0 +1,40 @@
+const { pool } = require("../config/db");
+
+const createUser = async (name, email, passwordHash, roleId) => {
+  const query = `
+    INSERT INTO users (name, email, password_hash, role_id)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, name, email, role_id, is_active, created_at;
+  `;
+  const values = [name, email, passwordHash, roleId];
+  const result = await pool.query(query, values);
+  return result.rows[0];
+};
+
+const findUserByEmail = async (email) => {
+  const query = `
+    SELECT u.*, r.name AS role_name
+    FROM users u
+    JOIN roles r ON u.role_id = r.id
+    WHERE u.email = $1;
+  `;
+  const result = await pool.query(query, [email]);
+  return result.rows[0];
+};
+
+const findUserById = async (id) => {
+  const query = `
+    SELECT u.id, u.name, u.email, u.is_active, u.created_at, r.name AS role_name
+    FROM users u
+    JOIN roles r ON u.role_id = r.id
+    WHERE u.id = $1;
+  `;
+  const result = await pool.query(query, [id]);
+  return result.rows[0];
+};
+
+module.exports = {
+  createUser,
+  findUserByEmail,
+  findUserById,
+};
