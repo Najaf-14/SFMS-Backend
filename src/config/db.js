@@ -10,23 +10,23 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
-pool.on("connect", () => {
-  console.log("PostgreSQL connected successfully.");
-});
-
 pool.on("error", (err) => {
   console.error("Unexpected PostgreSQL error:", err);
 });
 
 const initDB = async () => {
   try {
+    await pool.query("SELECT 1");
+    console.log("PostgreSQL connected successfully.");
+
     const sqlPath = path.join(__dirname, "database.sql");
     const sql = fs.readFileSync(sqlPath, "utf-8");
+
     await pool.query(sql);
+
     console.log("Database tables and initial roles initialized.");
   } catch (error) {
-    console.error("Error initializing database tables:", error.message);
+    console.error("Error initializing database:", error.message);
   }
 };
-
 module.exports = { pool, initDB };
