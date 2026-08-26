@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+select * from users;
 
 -- 5. REFRESH TOKENS TABLE (For session management)
 CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -57,7 +58,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     ip_address VARCHAR(45),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-    
+
 -- SEED THE 5 SRS ROLES
 INSERT INTO roles (name, description) VALUES
 ('SUPER_ADMIN', 'Owner with full system access'),
