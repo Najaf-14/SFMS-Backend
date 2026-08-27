@@ -6,14 +6,25 @@ const {
 
 const getUsers = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, page = 1, limit = 10 } = req.query;
 
-    const users = await getAllUsers(search || "");
+    const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNumber = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+    const result = await getAllUsers(search || "", pageNumber, limitNumber);
+    const totalPages = Math.ceil(result.total / limitNumber);
 
     return res.json({
       success: true,
-      count: users.length,
-      data: users,
+      count: result.total,
+      pagination: {
+        page: pageNumber,
+        limit: limitNumber,
+        total: result.total,
+        totalPages,
+        hasNextPage: pageNumber < totalPages,
+        hasPreviousPage: pageNumber > 1,
+      },
+      data: result.data,
     });
   } catch (error) {
     return res.status(500).json({
