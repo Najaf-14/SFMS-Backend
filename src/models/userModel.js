@@ -33,8 +33,19 @@ const findUserById = async (id) => {
   return result.rows[0];
 };
 
-const getAllUsers = async (search = "") => {
-  const query = `
+const getAllUsers = async (search = "", page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+  const searchValue = `%${search}%`;
+
+  const countQuery = `
+    SELECT COUNT(*) AS total
+    FROM users u
+    WHERE
+      u.name ILIKE $1
+      OR u.email ILIKE $1;
+  `;
+
+  const dataQuery = `
     SELECT
       u.id,
       u.name,
@@ -50,12 +61,20 @@ const getAllUsers = async (search = "") => {
     WHERE
       u.name ILIKE $1
       OR u.email ILIKE $1
-    ORDER BY u.id DESC;
+    ORDER BY u.id DESC
+    LIMIT $2
+    OFFSET $3;
   `;
 
-  const result = await pool.query(query, [`%${search}%`]);
+  const [countResult, dataResult] = await Promise.all([
+    pool.query(countQuery, [searchValue]),
+    pool.query(dataQuery, [searchValue, limit, offset]),
+  ]);
 
-  return result.rows;
+  return {
+    data: dataResult.rows,
+    total: Number(countResult.rows[0].total),
+  };
 };
 
 const updateUser = async (id, data) => {
