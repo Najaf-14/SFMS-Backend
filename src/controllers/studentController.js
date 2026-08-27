@@ -1,0 +1,71 @@
+const {
+  createStudent,
+  getAllStudents,
+  getStudentById,
+} = require("../models/studentModel");
+
+const addStudent = async (req, res) => {
+  try {
+    const { admission_number, student_name, family_id } = req.body;
+
+    if (!admission_number || !student_name || !family_id) {
+      return res.status(400).json({
+        error: "admission_number, student_name, and family_id are required.",
+      });
+    }
+
+    const newStudent = await createStudent(req.body);
+    return res.status(201).json({
+      message: "Student registered successfully",
+      student: newStudent,
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res
+        .status(400)
+        .json({ error: "Admission number already exists." });
+    }
+    if (error.code === "23503") {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Referenced Family, Class, Section, or Session ID does not exist.",
+        });
+    }
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const fetchAllStudents = async (req, res) => {
+  try {
+    const { search, class_id, section_id, status } = req.query;
+    const students = await getAllStudents({
+      search,
+      class_id,
+      section_id,
+      status,
+    });
+    return res.json({ success: true, count: students.length, data: students });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+const fetchStudentById = async (req, res) => {
+  try {
+    const student = await getStudentById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found." });
+    }
+    return res.json({ success: true, data: student });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = {
+  addStudent,
+  fetchAllStudents,
+  fetchStudentById,
+};
