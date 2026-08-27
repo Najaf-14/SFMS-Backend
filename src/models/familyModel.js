@@ -63,8 +63,57 @@ const getFamilyById = async (id) => {
   return result.rows[0] || null;
 };
 
+const updateFamily = async (id, data) => {
+  const allowedFields = [
+    "family_id_code",
+    "father_parent_name",
+    "mother_name",
+    "cnic",
+    "father_contact",
+    "mother_contact",
+    "whatsapp_number",
+    "email",
+    "address",
+    "emergency_contact",
+    "notes",
+    "family_concession",
+    "scholarship_info",
+    "is_active",
+  ];
+
+  const fields = [];
+  const values = [];
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      fields.push(`${field} = $${values.length + 1}`);
+      values.push(data[field]);
+    }
+  }
+
+  if (fields.length === 0) {
+    return null;
+  }
+
+  values.push(id);
+
+  const query = `
+    UPDATE families
+    SET
+      ${fields.join(", ")},
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $${values.length}
+    RETURNING *;
+  `;
+
+  const result = await pool.query(query, values);
+
+  return result.rows[0] || null;
+};
+
 module.exports = {
   createFamily,
   getAllFamilies,
   getFamilyById,
+  updateFamily,
 };
