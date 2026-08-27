@@ -1,4 +1,4 @@
--- 1. ROLES TABLE
+-- ROLES TABLE
 CREATE TABLE IF NOT EXISTS roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. PERMISSIONS TABLE
+-- PERMISSIONS TABLE
 CREATE TABLE IF NOT EXISTS permissions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
@@ -16,14 +16,14 @@ CREATE TABLE IF NOT EXISTS permissions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. ROLE_PERMISSIONS (M:N junction table for configurable permissions)
+-- ROLE_PERMISSIONS (M:N junction table for configurable permissions)
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     permission_id INT NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
 );
 
--- 4. USERS TABLE
+-- USERS TABLE
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     role_id INT NOT NULL REFERENCES roles(id),
@@ -40,7 +40,7 @@ UPDATE users
 SET role_id = 1
 WHERE id = 3; 
 
--- 5. REFRESH TOKENS TABLE (For session management)
+-- REFRESH TOKENS TABLE (For session management)
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. AUDIT LOGS TABLE (SRS-compliant financial and administrative logging)
+-- AUDIT LOGS TABLE
 CREATE TABLE IF NOT EXISTS audit_logs (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE SET NULL,
@@ -71,7 +71,7 @@ INSERT INTO roles (name, description) VALUES
 ('VIEWER', 'Read-only access')
 ON CONFLICT (name) DO NOTHING;
 
--- 7. FAMILIES TABLE
+-- FAMILIES TABLE
 CREATE TABLE IF NOT EXISTS families (
     id SERIAL PRIMARY KEY,
     family_id_code VARCHAR(50) UNIQUE NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS families (
 );
 
 
--- ACADEMIC SESSIONS (SRS Section 5)
+-- ACADEMIC SESSIONS
 CREATE TABLE IF NOT EXISTS academic_sessions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE, -- e.g. '2026-27'
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS academic_sessions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- CLASSES & SECTIONS (SRS Section 6)
+-- CLASSES & SECTIONS
 CREATE TABLE IF NOT EXISTS classes (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE, -- e.g. 'Class 1'
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS sections (
     UNIQUE(class_id, name)
 );
 
--- STUDENTS (SRS Section 4)
+-- STUDENTS
 CREATE TABLE IF NOT EXISTS students (
     id SERIAL PRIMARY KEY,
     admission_number VARCHAR(50) UNIQUE NOT NULL,
@@ -137,4 +137,40 @@ CREATE TABLE IF NOT EXISTS students (
         CHECK (status IN ('Active', 'Inactive', 'Graduated', 'Withdrawn', 'Suspended')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- FEE COMPONENTS
+CREATE TABLE IF NOT EXISTS fee_components (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE, -- e.g., 'Tuition Fee', 'Computer Fee', 'Transport'
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CLASS FEE STRUCTURES
+CREATE TABLE IF NOT EXISTS class_fee_structures (
+    id SERIAL PRIMARY KEY,
+    class_id INT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+    academic_session_id INT NOT NULL REFERENCES academic_sessions(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(class_id, academic_session_id)
+);
+
+-- CLASS FEE STRUCTURE ITEMS
+CREATE TABLE IF NOT EXISTS class_fee_structure_items (
+    id SERIAL PRIMARY KEY,
+    fee_structure_id INT NOT NULL REFERENCES class_fee_structures(id) ON DELETE CASCADE,
+    fee_component_id INT NOT NULL REFERENCES fee_components(id) ON DELETE RESTRICT,
+    amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+    UNIQUE(fee_structure_id, fee_component_id)
+);
+
+-- STUDENT CUSTOM FEE OVERRIDES / TRANSPORT (Optional student-specific items)
+CREATE TABLE IF NOT EXISTS student_fee_overrides (
+    id SERIAL PRIMARY KEY,
+    student_id INT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    fee_component_id INT NOT NULL REFERENCES fee_components(id) ON DELETE RESTRICT,
+    amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, fee_component_id)
 );
