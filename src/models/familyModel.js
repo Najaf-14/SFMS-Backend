@@ -45,16 +45,39 @@ const createFamily = async (data) => {
   return result.rows[0];
 };
 
-const getAllFamilies = async (search = "") => {
-  const query = `
-    SELECT * FROM families
-    WHERE father_parent_name ILIKE $1 
-       OR father_contact ILIKE $1 
-       OR family_id_code ILIKE $1
-    ORDER BY id DESC;
+const getAllFamilies = async (search = "", page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+
+  const searchValue = `%${search}%`;
+
+  const countQuery = `
+    SELECT COUNT(*) AS total
+    FROM families
+    WHERE father_parent_name ILIKE $1
+       OR father_contact ILIKE $1
+       OR family_id_code ILIKE $1;
   `;
-  const result = await pool.query(query, [`%${search}%`]);
-  return result.rows;
+
+  const dataQuery = `
+    SELECT *
+    FROM families
+    WHERE father_parent_name ILIKE $1
+       OR father_contact ILIKE $1
+       OR family_id_code ILIKE $1
+    ORDER BY id DESC
+    LIMIT $2
+    OFFSET $3;
+  `;
+
+  const [countResult, dataResult] = await Promise.all([
+    pool.query(countQuery, [searchValue]),
+    pool.query(dataQuery, [searchValue, limit, offset]),
+  ]);
+
+  return {
+    data: dataResult.rows,
+    total: Number(countResult.rows[0].total),
+  };
 };
 
 const getFamilyById = async (id) => {
