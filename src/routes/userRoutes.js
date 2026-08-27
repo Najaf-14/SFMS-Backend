@@ -1,0 +1,15 @@
+const express = require("express");
+const router = express.Router();
+const { getUsers, editUser } = require("../controllers/userController");
+const { authenticateToken } = require("../middleware/authMiddleware");
+const { authorizeRoles } = require("../middleware/roleMiddleware");
+
+router.get("/users", authenticateToken, getUsers);
+router.patch(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  editUser,
+);
+
+module.exports = router;

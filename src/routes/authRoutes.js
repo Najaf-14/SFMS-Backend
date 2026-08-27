@@ -5,8 +5,6 @@ const {
   login,
   refreshAccessToken,
   logout,
-  getUsers,
-  editUser,
 } = require("../controllers/authController");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
@@ -18,13 +16,5 @@ router.post("/logout", logout);
 router.get("/me", authenticateToken, (req, res) => {
   res.json({ message: "Authorized profile view", user: req.user });
 });
-
-router.get("/users", authenticateToken, getUsers);
-router.patch(
-  "/:id",
-  authenticateToken,
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
-  editUser,
-);
 
 module.exports = router;
