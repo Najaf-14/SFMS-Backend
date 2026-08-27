@@ -5,6 +5,7 @@ const {
   createUser,
   findUserByEmail,
   findUserById,
+  getAllUsers,
   updateUser,
 } = require("../models/userModel");
 const {
@@ -132,6 +133,24 @@ const logout = async (req, res) => {
   }
 };
 
+const getUsers = async (req, res) => {
+  try {
+    const { search } = req.query;
+
+    const users = await getAllUsers(search || "");
+
+    return res.json({
+      success: true,
+      count: users.length,
+      data: users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
 const editUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -181,5 +200,6 @@ module.exports = {
   login,
   refreshAccessToken,
   logout,
+  getUsers,
   editUser,
 };
