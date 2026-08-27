@@ -33,8 +33,40 @@ const findUserById = async (id) => {
   return result.rows[0];
 };
 
+const updateUser = async (id, data) => {
+  const allowedFields = ["name", "email", "is_active"];
+
+  const fields = [];
+  const values = [];
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      fields.push(`${field} = $${values.length + 1}`);
+      values.push(data[field]);
+    }
+  }
+
+  if (fields.length === 0) {
+    return null;
+  }
+
+  values.push(id);
+
+  const query = `
+    UPDATE users
+    SET ${fields.join(", ")}
+    WHERE id = $${values.length}
+    RETURNING id, name, email, role_id, is_active, created_at;
+  `;
+
+  const result = await pool.query(query, values);
+
+  return result.rows[0] || null;
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
   findUserById,
+  updateUser,
 };
