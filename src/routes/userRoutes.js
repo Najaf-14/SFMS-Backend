@@ -4,7 +4,7 @@ const { getUsers, editUser } = require("../controllers/userController");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
-router.get("/users", authenticateToken, getUsers);
+router.get("/", authenticateToken, getUsers);
 router.patch(
   "/:id",
   authenticateToken,
