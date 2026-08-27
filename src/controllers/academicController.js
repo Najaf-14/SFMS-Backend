@@ -4,6 +4,10 @@ const {
   getClassById,
   createSection,
   getSectionsByClassId,
+  createAcademicSession,
+  getAllAcademicSessions,
+  getAcademicSessionById,
+  updateAcademicSession,
 } = require("../models/academicModel");
 
 const addClass = async (req, res) => {
@@ -87,10 +91,124 @@ const fetchSectionsByClass = async (req, res) => {
   }
 };
 
+const addAcademicSession = async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        error: "Academic session name is required.",
+      });
+    }
+
+    const session = await createAcademicSession(name);
+
+    return res.status(201).json({
+      message: "Academic session created successfully",
+      session,
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(400).json({
+        error: "Academic session already exists.",
+      });
+    }
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+const fetchAcademicSessions = async (req, res) => {
+  try {
+    const sessions = await getAllAcademicSessions();
+
+    return res.json({
+      success: true,
+      count: sessions.length,
+      data: sessions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+const fetchAcademicSessionById = async (req, res) => {
+  try {
+    const session = await getAcademicSessionById(req.params.id);
+
+    if (!session) {
+      return res.status(404).json({
+        error: "Academic session not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: session,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+const editAcademicSession = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        error: "At least one field is required to update.",
+      });
+    }
+
+    const existingSession = await getAcademicSessionById(id);
+
+    if (!existingSession) {
+      return res.status(404).json({
+        error: "Academic session not found.",
+      });
+    }
+
+    const updatedSession = await updateAcademicSession(id, req.body);
+
+    if (!updatedSession) {
+      return res.status(400).json({
+        error: "No valid fields provided for update.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Academic session updated successfully.",
+      session: updatedSession,
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(400).json({
+        error: "Academic session name already exists.",
+      });
+    }
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addClass,
   fetchClasses,
   fetchClassById,
   addSection,
   fetchSectionsByClass,
+  addAcademicSession,
+  fetchAcademicSessions,
+  fetchAcademicSessionById,
+  editAcademicSession,
 };
