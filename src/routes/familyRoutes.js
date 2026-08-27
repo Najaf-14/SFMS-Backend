@@ -4,6 +4,7 @@ const {
   addFamily,
   fetchFamilies,
   fetchFamilyById,
+  editFamily,
 } = require("../controllers/familyController");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
@@ -17,5 +18,6 @@ router.post(
 );
 router.get("/", fetchFamilies);
 router.get("/:id", fetchFamilyById);
+router.patch("/:id", editFamily);
 
 module.exports = router;
