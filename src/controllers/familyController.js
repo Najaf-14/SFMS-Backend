@@ -2,6 +2,7 @@ const {
   createFamily,
   getAllFamilies,
   getFamilyById,
+  updateFamily,
 } = require("../models/familyModel");
 
 const addFamily = async (req, res) => {
@@ -52,8 +53,53 @@ const fetchFamilyById = async (req, res) => {
   }
 };
 
+const editFamily = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        error: "At least one field is required to update.",
+      });
+    }
+
+    const existingFamily = await getFamilyById(id);
+
+    if (!existingFamily) {
+      return res.status(404).json({
+        error: "Family not found.",
+      });
+    }
+
+    const updatedFamily = await updateFamily(id, req.body);
+
+    if (!updatedFamily) {
+      return res.status(400).json({
+        error: "No valid fields provided for update.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Family updated successfully.",
+      family: updatedFamily,
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(400).json({
+        error: "A family with this family_id_code already exists.",
+      });
+    }
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addFamily,
   fetchFamilies,
   fetchFamilyById,
+  editFamily,
 };
