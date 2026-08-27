@@ -33,6 +33,31 @@ const findUserById = async (id) => {
   return result.rows[0];
 };
 
+const getAllUsers = async (search = "") => {
+  const query = `
+    SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.role_id,
+      r.name AS role_name,
+      u.is_active,
+      u.last_login_at,
+      u.created_at,
+      u.updated_at
+    FROM users u
+    JOIN roles r ON u.role_id = r.id
+    WHERE
+      u.name ILIKE $1
+      OR u.email ILIKE $1
+    ORDER BY u.id DESC;
+  `;
+
+  const result = await pool.query(query, [`%${search}%`]);
+
+  return result.rows;
+};
+
 const updateUser = async (id, data) => {
   const allowedFields = ["name", "email", "is_active"];
 
@@ -68,5 +93,6 @@ module.exports = {
   createUser,
   findUserByEmail,
   findUserById,
+  getAllUsers,
   updateUser,
 };
