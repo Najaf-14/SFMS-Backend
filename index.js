@@ -9,6 +9,7 @@ app.use(express.json());
 
 // routes paths
 const authRoutes = require("./src/routes/authRoutes");
+const userRoutes = require("./src/routes/userRoutes");
 const familyRoutes = require("./src/routes/familyRoutes");
 const studentRoutes = require("./src/routes/studentRoutes");
 const academicRoutes = require("./src/routes/academicRoutes");
@@ -17,6 +18,7 @@ const { initDB } = require("./src/config/db");
 
 // api routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/families", familyRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/academic", academicRoutes);
