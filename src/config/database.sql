@@ -174,3 +174,32 @@ CREATE TABLE IF NOT EXISTS student_fee_overrides (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(student_id, fee_component_id)
 );
+
+-- FAMILY INVOICES / CHALLANS
+CREATE TABLE IF NOT EXISTS invoices (
+    id SERIAL PRIMARY KEY,
+    challan_no VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'FC-202609-0001'
+    family_id INT NOT NULL REFERENCES families(id) ON DELETE RESTRICT,
+    billing_month VARCHAR(7) NOT NULL, -- Format: 'YYYY-MM', e.g., '2026-09'
+    due_date DATE NOT NULL,
+    subtotal_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    concession_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    previous_arrears NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    total_payable NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    paid_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    status VARCHAR(30) NOT NULL DEFAULT 'Unpaid' 
+        CHECK (status IN ('Unpaid', 'Partially Paid', 'Paid', 'Overdue', 'Cancelled', 'Waived')),
+    generated_by INT REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(family_id, billing_month) -- Ensures Idempotency per family per month
+);
+
+-- INVOICE LINE ITEMS
+CREATE TABLE IF NOT EXISTS invoice_items (
+    id SERIAL PRIMARY KEY,
+    invoice_id INT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    student_id INT NOT NULL REFERENCES students(id) ON DELETE RESTRICT,
+    fee_component_id INT NOT NULL REFERENCES fee_components(id) ON DELETE RESTRICT,
+    amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0)
+);
