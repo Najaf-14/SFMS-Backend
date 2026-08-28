@@ -14,13 +14,17 @@ router.use(authenticateToken);
 
 router.post(
   "/components",
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeRoles("SUPER_ADMIN", "ACCOUNTANT"),
   addComponent,
 );
-router.get("/components", fetchComponents);
+router.get(
+  "/components",
+  authorizeRoles("SUPER_ADMIN", "ACCOUNTANT", "PRINCIPAL"),
+  fetchComponents,
+);
 router.post(
   "/structures",
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeRoles("SUPER_ADMIN", "ACCOUNTANT"),
   setupClassFee,
 );
 router.get("/structures", fetchAllStructures);
