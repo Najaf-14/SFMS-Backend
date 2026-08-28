@@ -10,11 +10,7 @@ const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 router.use(authenticateToken);
 
-router.post(
-  "/",
-  authorizeRoles("SUPER_ADMIN", "ADMIN", "PRINCIPAL"),
-  addStudent,
-);
+router.post("/", authorizeRoles("SUPER_ADMIN", "ADMIN"), addStudent);
 router.get("/", fetchAllStudents);
 router.get("/:id", fetchStudentById);
 
