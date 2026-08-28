@@ -14,6 +14,7 @@ const familyRoutes = require("./src/routes/familyRoutes");
 const studentRoutes = require("./src/routes/studentRoutes");
 const academicRoutes = require("./src/routes/academicRoutes");
 const feesRoutes = require("./src/routes/feeStructureRoutes");
+const feeGenerationRoutes = require("./src/routes/feeGenerationRoutes");
 
 const { initDB } = require("./src/config/db");
 
@@ -24,6 +25,7 @@ app.use("/api/families", familyRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/academic", academicRoutes);
 app.use("/api/fees", feesRoutes);
+app.use("/api/billing", feeGenerationRoutes);
 
 //Test API
 app.get("/", (req, res) => {
