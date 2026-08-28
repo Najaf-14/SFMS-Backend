@@ -7,7 +7,6 @@ const {
   logout,
 } = require("../controllers/authController");
 const { authenticateToken } = require("../middleware/authMiddleware");
-const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 router.post("/register", register);
 router.post("/login", login);
