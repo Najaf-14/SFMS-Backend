@@ -8,7 +8,7 @@ router.get("/", authenticateToken, getUsers);
 router.patch(
   "/:id",
   authenticateToken,
-  authorizeRoles("SUPER_ADMIN", "ADMIN"),
+  authorizeRoles("SUPER_ADMIN"),
   editUser,
 );
 
