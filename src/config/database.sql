@@ -364,6 +364,7 @@ CREATE TABLE IF NOT EXISTS invoice_items (
         CHECK (amount >= 0)
 );
 
+
 -- =========================================================
 -- DATABASE INITIALIZATION COMPLETE
 -- =========================================================
