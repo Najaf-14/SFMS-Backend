@@ -138,6 +138,31 @@ const updateAcademicSession = async (id, data) => {
   return result.rows[0] || null;
 };
 
+const promoteStudentsBulk = async ({
+  from_class_id,
+  to_class_id,
+  from_session_id,
+  to_session_id,
+}) => {
+  const query = `
+    UPDATE students
+    SET 
+      class_id = $1,
+      academic_session_id = $2,
+      section_id = NULL,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE 
+      class_id = $3
+      AND (academic_session_id = $4 OR academic_session_id IS NULL)
+      AND status = 'Active'
+    RETURNING id, admission_number, student_name, class_id, academic_session_id;
+  `;
+
+  const values = [to_class_id, to_session_id, from_class_id, from_session_id];
+  const result = await pool.query(query, values);
+  return result.rows;
+};
+
 module.exports = {
   createClass,
   getAllClassesWithSections,
@@ -148,4 +173,5 @@ module.exports = {
   getAllAcademicSessions,
   getAcademicSessionById,
   updateAcademicSession,
+  promoteStudentsBulk,
 };
