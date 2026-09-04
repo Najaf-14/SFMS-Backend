@@ -18,6 +18,10 @@ router.post(
 );
 router.get("/", fetchFamilies);
 router.get("/:id", fetchFamilyById);
-router.patch("/:id", editFamily);
+router.patch(
+  "/:id",
+  authorizeRoles("SUPER_ADMIN", "ADMIN", "PRINCIPAL"),
+  editFamily,
+);
 
 module.exports = router;

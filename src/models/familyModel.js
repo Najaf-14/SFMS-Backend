@@ -3,7 +3,6 @@ const { pool } = require("../config/db");
 const createFamily = async (data) => {
   const query = `
     INSERT INTO families (
-      family_id_code,
       father_parent_name,
       mother_name,
       cnic,
@@ -19,12 +18,11 @@ const createFamily = async (data) => {
       scholarship_info,
       is_active
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     RETURNING *;
   `;
 
   const values = [
-    data.family_id_code,
     data.father_parent_name,
     data.mother_name || null,
     data.cnic || null,
@@ -47,7 +45,6 @@ const createFamily = async (data) => {
 
 const getAllFamilies = async (search = "", page = 1, limit = 10) => {
   const offset = (page - 1) * limit;
-
   const searchValue = `%${search}%`;
 
   const countQuery = `
@@ -55,7 +52,7 @@ const getAllFamilies = async (search = "", page = 1, limit = 10) => {
     FROM families
     WHERE father_parent_name ILIKE $1
        OR father_contact ILIKE $1
-       OR family_id_code ILIKE $1;
+       OR CAST(id AS TEXT) ILIKE $1;
   `;
 
   const dataQuery = `
@@ -63,7 +60,7 @@ const getAllFamilies = async (search = "", page = 1, limit = 10) => {
     FROM families
     WHERE father_parent_name ILIKE $1
        OR father_contact ILIKE $1
-       OR family_id_code ILIKE $1
+       OR CAST(id AS TEXT) ILIKE $1
     ORDER BY id DESC
     LIMIT $2
     OFFSET $3;
@@ -88,7 +85,6 @@ const getFamilyById = async (id) => {
 
 const updateFamily = async (id, data) => {
   const allowedFields = [
-    "family_id_code",
     "father_parent_name",
     "mother_name",
     "cnic",
@@ -130,7 +126,6 @@ const updateFamily = async (id, data) => {
   `;
 
   const result = await pool.query(query, values);
-
   return result.rows[0] || null;
 };
 

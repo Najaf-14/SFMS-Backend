@@ -7,12 +7,11 @@ const {
 
 const addFamily = async (req, res) => {
   try {
-    const { family_id_code, father_parent_name, father_contact } = req.body;
+    const { father_parent_name, father_contact } = req.body;
 
-    if (!family_id_code || !father_parent_name || !father_contact) {
+    if (!father_parent_name || !father_contact) {
       return res.status(400).json({
-        error:
-          "family_id_code, father_parent_name, and father_contact are required.",
+        error: "father_parent_name and father_contact are required.",
       });
     }
 
@@ -22,11 +21,6 @@ const addFamily = async (req, res) => {
       family: newFamily,
     });
   } catch (error) {
-    if (error.code === "23505") {
-      return res
-        .status(400)
-        .json({ error: "A family with this family_id_code already exists." });
-    }
     return res.status(500).json({ error: error.message });
   }
 };
@@ -55,7 +49,6 @@ const fetchFamilies = async (req, res) => {
     });
   } catch (error) {
     console.error("Fetch families error:", error);
-
     return res.status(500).json({
       error: error.message,
     });
@@ -85,7 +78,6 @@ const editFamily = async (req, res) => {
     }
 
     const existingFamily = await getFamilyById(id);
-
     if (!existingFamily) {
       return res.status(404).json({
         error: "Family not found.",
@@ -93,7 +85,6 @@ const editFamily = async (req, res) => {
     }
 
     const updatedFamily = await updateFamily(id, req.body);
-
     if (!updatedFamily) {
       return res.status(400).json({
         error: "No valid fields provided for update.",
@@ -106,12 +97,6 @@ const editFamily = async (req, res) => {
       family: updatedFamily,
     });
   } catch (error) {
-    if (error.code === "23505") {
-      return res.status(400).json({
-        error: "A family with this family_id_code already exists.",
-      });
-    }
-
     return res.status(500).json({
       error: error.message,
     });
