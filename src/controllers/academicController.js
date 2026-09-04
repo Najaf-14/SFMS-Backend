@@ -201,6 +201,47 @@ const editAcademicSession = async (req, res) => {
   }
 };
 
+const promoteStudents = async (req, res) => {
+  try {
+    const { from_class_id, to_class_id, from_session_id, to_session_id } =
+      req.body;
+
+    if (!from_class_id || !to_class_id || !from_session_id || !to_session_id) {
+      return res.status(400).json({
+        error:
+          "from_class_id, to_class_id, from_session_id, and to_session_id are required.",
+      });
+    }
+
+    if (from_class_id === to_class_id && from_session_id === to_session_id) {
+      return res.status(400).json({
+        error:
+          "Source and destination class and session cannot be the exact same.",
+      });
+    }
+
+    const promotedList = await promoteStudentsBulk({
+      from_class_id: Number(from_class_id),
+      to_class_id: Number(to_class_id),
+      from_session_id: Number(from_session_id),
+      to_session_id: Number(to_session_id),
+    });
+
+    return res.json({
+      success: true,
+      message: `Successfully promoted ${promotedList.length} active students.`,
+      count: promotedList.length,
+      data: promotedList,
+    });
+  } catch (error) {
+    console.error("BULK PROMOTION ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   addClass,
   fetchClasses,
@@ -211,4 +252,5 @@ module.exports = {
   fetchAcademicSessions,
   fetchAcademicSessionById,
   editAcademicSession,
+  promoteStudents,
 };
