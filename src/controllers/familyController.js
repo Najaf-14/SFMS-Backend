@@ -3,40 +3,59 @@ const {
   getAllFamilies,
   getFamilyById,
   updateFamily,
+  deleteFamily,
 } = require("../models/familyModel");
 
+// CREATE FAMILY
 const addFamily = async (req, res) => {
   try {
     const { father_parent_name, father_contact } = req.body;
 
-    if (!father_parent_name || !father_contact) {
+    if (!father_parent_name || !father_parent_name.trim()) {
       return res.status(400).json({
-        error: "father_parent_name and father_contact are required.",
+        error: "father_parent_name is required.",
+      });
+    }
+
+    if (!father_contact || !father_contact.trim()) {
+      return res.status(400).json({
+        error: "father_contact is required.",
       });
     }
 
     const newFamily = await createFamily(req.body);
+
     return res.status(201).json({
-      message: "Family registered successfully",
-      family: newFamily,
+      success: true,
+      message: "Family registered successfully.",
+      data: newFamily,
     });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Create family error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 };
 
+// GET ALL FAMILIES
 const fetchFamilies = async (req, res) => {
   try {
-    const { search, page = 1, limit = 10 } = req.query;
+    const { search = "", page = 1, limit = 10 } = req.query;
 
     const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+
     const limitNumber = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-    const result = await getAllFamilies(search || "", pageNumber, limitNumber);
+
+    const result = await getAllFamilies(search, pageNumber, limitNumber);
+
     const totalPages = Math.ceil(result.total / limitNumber);
 
     return res.json({
       success: true,
       count: result.total,
+
       pagination: {
         page: pageNumber,
         limit: limitNumber,
@@ -45,58 +64,166 @@ const fetchFamilies = async (req, res) => {
         hasNextPage: pageNumber < totalPages,
         hasPreviousPage: pageNumber > 1,
       },
+
       data: result.data,
     });
   } catch (error) {
     console.error("Fetch families error:", error);
+
     return res.status(500).json({
       error: error.message,
     });
   }
 };
 
+// GET FAMILY BY ID
 const fetchFamilyById = async (req, res) => {
   try {
-    const family = await getFamilyById(req.params.id);
-    if (!family) {
-      return res.status(404).json({ error: "Family not found." });
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        error: "Invalid family ID.",
+      });
     }
-    return res.json({ success: true, data: family });
+
+    const family = await getFamilyById(id);
+
+    if (!family) {
+      return res.status(404).json({
+        error: "Family not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: family,
+    });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error("Fetch family error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 };
 
+// UPDATE FAMILY
 const editFamily = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (Object.keys(req.body).length === 0) {
+    if (!/^\d+$/.test(id)) {
       return res.status(400).json({
-        error: "At least one field is required to update.",
+        success: false,
+        error: "Invalid family ID.",
+      });
+    }
+
+    const {
+      father_parent_name,
+      father_contact,
+      mother_name,
+      cnic,
+      mother_contact,
+      whatsapp_number,
+      email,
+      address,
+      emergency_contact,
+      notes,
+      admission_date,
+      family_concession,
+      scholarship_info,
+      is_active,
+    } = req.body;
+
+    // Check required fields
+    if (!father_parent_name || !father_parent_name.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "father_parent_name is required.",
+      });
+    }
+
+    if (!father_contact || !father_contact.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "father_contact is required.",
+      });
+    }
+
+    // Check family exists
+    const existingFamily = await getFamilyById(id);
+
+    if (!existingFamily) {
+      return res.status(404).json({
+        success: false,
+        error: "Family not found.",
+      });
+    }
+
+    // Update ALL fields
+    const updatedFamily = await updateFamily(id, {
+      father_parent_name,
+      mother_name,
+      cnic,
+      father_contact,
+      mother_contact,
+      whatsapp_number,
+      email,
+      address,
+      emergency_contact,
+      notes,
+      admission_date,
+      family_concession,
+      scholarship_info,
+      is_active,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Family updated successfully.",
+      data: updatedFamily,
+    });
+  } catch (error) {
+    console.error("Update family error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: "Failed to update family.",
+    });
+  }
+};
+
+// DELETE / DEACTIVATE FAMILY
+const removeFamily = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        error: "Invalid family ID.",
       });
     }
 
     const existingFamily = await getFamilyById(id);
+
     if (!existingFamily) {
       return res.status(404).json({
         error: "Family not found.",
       });
     }
 
-    const updatedFamily = await updateFamily(id, req.body);
-    if (!updatedFamily) {
-      return res.status(400).json({
-        error: "No valid fields provided for update.",
-      });
-    }
+    const deletedFamily = await deleteFamily(id);
 
     return res.json({
       success: true,
-      message: "Family updated successfully.",
-      family: updatedFamily,
+      message: "Family deactivated successfully.",
+      data: deletedFamily,
     });
   } catch (error) {
+    console.error("Delete family error:", error);
+
     return res.status(500).json({
       error: error.message,
     });
@@ -108,4 +235,5 @@ module.exports = {
   fetchFamilies,
   fetchFamilyById,
   editFamily,
+  removeFamily,
 };
