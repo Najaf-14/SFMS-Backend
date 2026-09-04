@@ -1,5 +1,26 @@
 const { pool } = require("../config/db");
 
+// ============================================================
+// GET CLASS BY ID
+// ============================================================
+
+const getClassById = async (classId) => {
+  const result = await pool.query(
+    `
+    SELECT *
+    FROM classes
+    WHERE id = $1;
+    `,
+    [classId],
+  );
+
+  return result.rows[0] || null;
+};
+
+// ============================================================
+// CREATE CLASS WITH SECTIONS AND FEES
+// ============================================================
+
 const createClassWithFees = async ({
   name,
   sections = [],
@@ -11,6 +32,7 @@ const createClassWithFees = async ({
   try {
     await client.query("BEGIN");
 
+    // Create class
     const classResult = await client.query(
       `
       INSERT INTO classes (name)
@@ -22,6 +44,7 @@ const createClassWithFees = async ({
 
     const classData = classResult.rows[0];
 
+    // Create sections
     const createdSections = [];
 
     for (const sectionName of sections) {
@@ -40,6 +63,7 @@ const createClassWithFees = async ({
       createdSections.push(sectionResult.rows[0]);
     }
 
+    // Create fee structure
     let feeStructure = null;
     const createdFees = [];
 
@@ -58,6 +82,7 @@ const createClassWithFees = async ({
 
       feeStructure = structureResult.rows[0];
 
+      // Create fee items
       for (const fee of fees) {
         const feeResult = await client.query(
           `
@@ -92,6 +117,10 @@ const createClassWithFees = async ({
   }
 };
 
+// ============================================================
+// GET ALL CLASSES WITH FEES
+// ============================================================
+
 const getClassesWithFees = async ({
   page = 1,
   limit = 10,
@@ -99,19 +128,12 @@ const getClassesWithFees = async ({
   sessionId = null,
 }) => {
   const offset = (page - 1) * limit;
-
   const searchValue = `%${search}%`;
 
   const query = `
     SELECT
       c.id AS class_id,
       c.name AS class_name,
-
-      /*
-      |--------------------------------------------------------------------------
-      | Sections
-      |--------------------------------------------------------------------------
-      */
 
       COALESCE(
         (
@@ -128,12 +150,6 @@ const getClassesWithFees = async ({
         '[]'::json
       ) AS sections,
 
-      /*
-      |--------------------------------------------------------------------------
-      | Fees
-      |--------------------------------------------------------------------------
-      */
-
       COALESCE(
         (
           SELECT JSON_AGG(
@@ -145,7 +161,7 @@ const getClassesWithFees = async ({
             ORDER BY fc.id
           )
           FROM class_fee_structures cfs
-          
+
           INNER JOIN class_fee_structure_items cfsi
             ON cfsi.fee_structure_id = cfs.id
 
@@ -160,12 +176,6 @@ const getClassesWithFees = async ({
         ),
         '[]'::json
       ) AS fees,
-
-      /*
-      |--------------------------------------------------------------------------
-      | Total Base Fee
-      |--------------------------------------------------------------------------
-      */
 
       COALESCE(
         (
@@ -207,7 +217,6 @@ const getClassesWithFees = async ({
     `
     SELECT COUNT(*) AS total
     FROM classes
-
     WHERE
       name ILIKE $1
       OR CAST(id AS TEXT) ILIKE $1;
@@ -219,7 +228,7 @@ const getClassesWithFees = async ({
 
   return {
     data: result.rows,
-
+    total,
     pagination: {
       page,
       limit,
@@ -229,17 +238,15 @@ const getClassesWithFees = async ({
   };
 };
 
+// ============================================================
+// GET SINGLE CLASS WITH FEES
+// ============================================================
+
 const getClassWithFees = async (classId, sessionId = null) => {
   const query = `
     SELECT
       c.id AS class_id,
       c.name AS class_name,
-
-      /*
-      |--------------------------------------------------------------------------
-      | Sections
-      |--------------------------------------------------------------------------
-      */
 
       COALESCE(
         (
@@ -255,12 +262,6 @@ const getClassWithFees = async (classId, sessionId = null) => {
         ),
         '[]'::json
       ) AS sections,
-
-      /*
-      |--------------------------------------------------------------------------
-      | Fees
-      |--------------------------------------------------------------------------
-      */
 
       COALESCE(
         (
@@ -289,12 +290,6 @@ const getClassWithFees = async (classId, sessionId = null) => {
         '[]'::json
       ) AS fees,
 
-      /*
-      |--------------------------------------------------------------------------
-      | Total Base Fee
-      |--------------------------------------------------------------------------
-      */
-
       COALESCE(
         (
           SELECT SUM(cfsi.amount)
@@ -322,6 +317,10 @@ const getClassWithFees = async (classId, sessionId = null) => {
   return result.rows[0] || null;
 };
 
+// ============================================================
+// UPDATE CLASS WITH SECTIONS AND FEES
+// ============================================================
+
 const updateClassWithFees = async (
   classId,
   { name, sections = [], academic_session_id, fees = [] },
@@ -331,11 +330,11 @@ const updateClassWithFees = async (
   try {
     await client.query("BEGIN");
 
+    // Update class
     const classResult = await client.query(
       `
       UPDATE classes
-      SET
-        name = $1
+      SET name = $1
       WHERE id = $2
       RETURNING *;
       `,
@@ -346,6 +345,7 @@ const updateClassWithFees = async (
       throw new Error("Class not found.");
     }
 
+    // Delete old sections
     await client.query(
       `
       DELETE FROM sections
@@ -354,6 +354,7 @@ const updateClassWithFees = async (
       [classId],
     );
 
+    // Create updated sections
     const updatedSections = [];
 
     for (const sectionName of sections) {
@@ -378,14 +379,12 @@ const updateClassWithFees = async (
     if (academic_session_id) {
       const structureResult = await client.query(
         `
-          SELECT *
-          FROM class_fee_structures
-
-          WHERE class_id = $1
-            AND academic_session_id = $2
-
-          LIMIT 1;
-          `,
+        SELECT *
+        FROM class_fee_structures
+        WHERE class_id = $1
+          AND academic_session_id = $2
+        LIMIT 1;
+        `,
         [classId, academic_session_id],
       );
 
@@ -395,7 +394,6 @@ const updateClassWithFees = async (
         await client.query(
           `
           DELETE FROM class_fee_structure_items
-
           WHERE fee_structure_id = $1;
           `,
           [feeStructure.id],
@@ -403,13 +401,13 @@ const updateClassWithFees = async (
       } else {
         const newStructure = await client.query(
           `
-            INSERT INTO class_fee_structures (
-              class_id,
-              academic_session_id
-            )
-            VALUES ($1, $2)
-            RETURNING *;
-            `,
+          INSERT INTO class_fee_structures (
+            class_id,
+            academic_session_id
+          )
+          VALUES ($1, $2)
+          RETURNING *;
+          `,
           [classId, academic_session_id],
         );
 
@@ -419,14 +417,14 @@ const updateClassWithFees = async (
       for (const fee of fees) {
         const feeResult = await client.query(
           `
-            INSERT INTO class_fee_structure_items (
-              fee_structure_id,
-              fee_component_id,
-              amount
-            )
-            VALUES ($1, $2, $3)
-            RETURNING *;
-            `,
+          INSERT INTO class_fee_structure_items (
+            fee_structure_id,
+            fee_component_id,
+            amount
+          )
+          VALUES ($1, $2, $3)
+          RETURNING *;
+          `,
           [feeStructure.id, fee.fee_component_id, fee.amount],
         );
 
@@ -450,16 +448,20 @@ const updateClassWithFees = async (
   }
 };
 
+// ============================================================
+// DELETE CLASS WITH ALL DATA
+// ============================================================
+
 const deleteClassWithData = async (classId) => {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
+    // Delete fee items
     await client.query(
       `
       DELETE FROM class_fee_structure_items
-
       WHERE fee_structure_id IN (
         SELECT id
         FROM class_fee_structures
@@ -469,37 +471,37 @@ const deleteClassWithData = async (classId) => {
       [classId],
     );
 
+    // Delete fee structures
     await client.query(
       `
       DELETE FROM class_fee_structures
-
       WHERE class_id = $1;
       `,
       [classId],
     );
 
+    // Delete sections
     await client.query(
       `
       DELETE FROM sections
-
       WHERE class_id = $1;
       `,
       [classId],
     );
 
+    // Delete class
     const result = await client.query(
       `
       DELETE FROM classes
-
       WHERE id = $1
-
       RETURNING *;
       `,
       [classId],
     );
 
     if (result.rows.length === 0) {
-      throw new Error("Class not found.");
+      await client.query("ROLLBACK");
+      return null;
     }
 
     await client.query("COMMIT");
@@ -512,6 +514,10 @@ const deleteClassWithData = async (classId) => {
     client.release();
   }
 };
+
+// ============================================================
+// CREATE SECTION
+// ============================================================
 
 const createSection = async (classId, name) => {
   const result = await pool.query(
@@ -529,14 +535,16 @@ const createSection = async (classId, name) => {
   return result.rows[0];
 };
 
+// ============================================================
+// GET SECTIONS BY CLASS
+// ============================================================
+
 const getSectionsByClass = async (classId) => {
   const result = await pool.query(
     `
     SELECT *
     FROM sections
-
     WHERE class_id = $1
-
     ORDER BY id;
     `,
     [classId],
@@ -545,12 +553,15 @@ const getSectionsByClass = async (classId) => {
   return result.rows;
 };
 
+// ============================================================
+// GET SECTION BY ID
+// ============================================================
+
 const getSectionById = async (sectionId) => {
   const result = await pool.query(
     `
     SELECT *
     FROM sections
-
     WHERE id = $1;
     `,
     [sectionId],
@@ -559,15 +570,16 @@ const getSectionById = async (sectionId) => {
   return result.rows[0] || null;
 };
 
+// ============================================================
+// UPDATE SECTION
+// ============================================================
+
 const updateSection = async (sectionId, name) => {
   const result = await pool.query(
     `
     UPDATE sections
-
     SET name = $1
-
     WHERE id = $2
-
     RETURNING *;
     `,
     [name, sectionId],
@@ -576,13 +588,15 @@ const updateSection = async (sectionId, name) => {
   return result.rows[0] || null;
 };
 
+// ============================================================
+// DELETE SECTION
+// ============================================================
+
 const deleteSection = async (sectionId) => {
   const result = await pool.query(
     `
     DELETE FROM sections
-
     WHERE id = $1
-
     RETURNING *;
     `,
     [sectionId],
@@ -592,6 +606,8 @@ const deleteSection = async (sectionId) => {
 };
 
 module.exports = {
+  getClassById,
+
   createClassWithFees,
   getClassesWithFees,
   getClassWithFees,

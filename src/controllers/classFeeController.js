@@ -1,4 +1,6 @@
 const {
+  getClassById,
+
   createSection,
   getSectionsByClass,
   getSectionById,
@@ -201,83 +203,51 @@ const editClassWithFees = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const {
-      name,
-      description,
-      sections = [],
-      academic_session_id,
-      fees = [],
-    } = req.body;
-
-    if (!/^\d+$/.test(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({
-        success: false,
-        error: "Invalid class ID.",
+        error: "Valid class ID is required.",
       });
     }
 
+    const { name, sections = [], academic_session_id, fees = [] } = req.body;
+
     if (!name || !name.trim()) {
       return res.status(400).json({
-        success: false,
         error: "Class name is required.",
       });
     }
 
     if (!Array.isArray(sections)) {
       return res.status(400).json({
-        success: false,
-        error: "sections must be an array.",
+        error: "Sections must be an array.",
       });
     }
 
     if (!Array.isArray(fees)) {
       return res.status(400).json({
-        success: false,
-        error: "fees must be an array.",
+        error: "Fees must be an array.",
       });
     }
 
-    for (const fee of fees) {
-      if (
-        !fee.fee_component_id ||
-        fee.amount === undefined ||
-        Number(fee.amount) < 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          error: "Each fee must contain fee_component_id and a valid amount.",
-        });
-      }
-    }
-
-    const existingClass = await getClassById(id);
-
-    if (!existingClass) {
-      return res.status(404).json({
-        success: false,
-        error: "Class not found.",
-      });
-    }
-
-    const result = await updateClassWithFees(id, {
+    const updatedClass = await updateClassWithFees(parseInt(id, 10), {
       name: name.trim(),
-      description,
-      sections: sections.map((section) => section.trim()),
-      academic_session_id,
+      sections,
+      academic_session_id: academic_session_id
+        ? parseInt(academic_session_id, 10)
+        : null,
       fees,
     });
 
     return res.status(200).json({
       success: true,
-      message: "Class, sections and fee structure updated successfully.",
-      data: result,
+      message: "Class updated successfully.",
+      data: updatedClass,
     });
   } catch (error) {
     console.error("Update class with fees error:", error);
 
     return res.status(500).json({
-      success: false,
-      error: "Failed to update class.",
+      error: error.message,
     });
   }
 };
@@ -286,23 +256,19 @@ const removeClass = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!/^\d+$/.test(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({
-        success: false,
-        error: "Invalid class ID.",
+        error: "Valid class ID is required.",
       });
     }
 
-    const existingClass = await getClassById(id);
+    const deletedClass = await deleteClassWithData(parseInt(id, 10));
 
-    if (!existingClass) {
+    if (!deletedClass) {
       return res.status(404).json({
-        success: false,
         error: "Class not found.",
       });
     }
-
-    const deletedClass = await deleteClassWithData(id);
 
     return res.status(200).json({
       success: true,
@@ -312,17 +278,8 @@ const removeClass = async (req, res) => {
   } catch (error) {
     console.error("Delete class error:", error);
 
-    if (error.code === "23503") {
-      return res.status(400).json({
-        success: false,
-        error:
-          "Cannot delete this class because it is being used by other records.",
-      });
-    }
-
     return res.status(500).json({
-      success: false,
-      error: "Failed to delete class.",
+      error: error.message,
     });
   }
 };

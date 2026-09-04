@@ -55,6 +55,7 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
   let whereClause = `WHERE 1=1`;
   const values = [];
 
+  // Search
   if (search) {
     values.push(`%${search}%`);
 
@@ -71,6 +72,7 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
     `;
   }
 
+  // Filter by class
   if (class_id) {
     values.push(class_id);
 
@@ -79,6 +81,7 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
     `;
   }
 
+  // Filter by section
   if (section_id) {
     values.push(section_id);
 
@@ -87,6 +90,7 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
     `;
   }
 
+  // Filter by status
   if (status) {
     values.push(status);
 
@@ -95,6 +99,7 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
     `;
   }
 
+  // Count query
   const countQuery = `
     SELECT COUNT(*) AS total
 
@@ -110,11 +115,13 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
 
   const total = Number(countResult.rows[0].total);
 
+  // Pagination values
   const dataValues = [...values, limit, offset];
 
   const limitPosition = values.length + 1;
   const offsetPosition = values.length + 2;
 
+  // Data query
   const dataQuery = `
     SELECT 
       s.id,
@@ -129,17 +136,20 @@ const getAllStudents = async (filters = {}, page = 1, limit = 10) => {
       s.address,
       s.status,
 
+      -- Family information
       f.id AS family_id,
-      f.family_id_code,
       f.father_parent_name,
       f.father_contact,
 
+      -- Class information
       c.id AS class_id,
       c.name AS class_name,
 
+      -- Section information
       sec.id AS section_id,
       sec.name AS section_name,
 
+      -- Academic session information
       a.id AS session_id,
       a.name AS session_name
 
@@ -177,12 +187,20 @@ const getStudentById = async (id) => {
   const query = `
     SELECT 
       s.*,
-      f.family_id_code,
+
+      -- Family information
+      f.id AS family_id,
       f.father_parent_name,
       f.father_contact,
       f.whatsapp_number,
+
+      -- Class information
       c.name AS class_name,
+
+      -- Section information
       sec.name AS section_name,
+
+      -- Academic session information
       a.name AS session_name
 
     FROM students s
@@ -207,8 +225,67 @@ const getStudentById = async (id) => {
   return result.rows[0] || null;
 };
 
+const updateStudent = async (id, data) => {
+  const query = `
+    UPDATE students
+    SET
+      student_name = $1,
+      family_id = $2,
+      mother_name = $3,
+      date_of_birth = $4,
+      gender = $5,
+      class_id = $6,
+      section_id = $7,
+      roll_number = $8,
+      admission_date = $9,
+      contact = $10,
+      address = $11,
+      academic_session_id = $12,
+      status = $13,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $14
+    RETURNING *;
+  `;
+
+  const values = [
+    data.student_name,
+    data.family_id,
+    data.mother_name || null,
+    data.date_of_birth || null,
+    data.gender || null,
+    data.class_id || null,
+    data.section_id || null,
+    data.roll_number || null,
+    data.admission_date || null,
+    data.contact || null,
+    data.address || null,
+    data.academic_session_id || null,
+    data.status || "Active",
+    id,
+  ];
+
+  const result = await pool.query(query, values);
+
+  return result.rows[0] || null;
+};
+
+const deleteStudent = async (id) => {
+  const result = await pool.query(
+    `
+    DELETE FROM students
+    WHERE id = $1
+    RETURNING *;
+    `,
+    [id],
+  );
+
+  return result.rows[0] || null;
+};
+
 module.exports = {
   createStudent,
   getAllStudents,
   getStudentById,
+  updateStudent,
+  deleteStudent,
 };

@@ -172,38 +172,25 @@ CREATE TABLE IF NOT EXISTS sections (
 
 CREATE TABLE IF NOT EXISTS students (
     id SERIAL PRIMARY KEY,
-
     admission_number VARCHAR(50) UNIQUE NOT NULL,
-
     student_name VARCHAR(150) NOT NULL,
-
     family_id INT NOT NULL
         REFERENCES families(id)
         ON DELETE RESTRICT,
-
     mother_name VARCHAR(150),
-
     date_of_birth DATE,
-
     gender VARCHAR(20)
         CHECK (gender IN ('Male', 'Female', 'Other')),
-
     class_id INT
         REFERENCES classes(id)
         ON DELETE SET NULL,
-
     section_id INT
         REFERENCES sections(id)
         ON DELETE SET NULL,
-
     roll_number VARCHAR(50),
-
     admission_date DATE DEFAULT CURRENT_DATE,
-
     contact VARCHAR(30),
-
     address TEXT,
-
     academic_session_id INT
         REFERENCES academic_sessions(id)
         ON DELETE SET NULL,
@@ -224,18 +211,14 @@ CREATE TABLE IF NOT EXISTS students (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-
 -- =========================================================
 -- 12. FEE COMPONENTS
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS fee_components (
     id SERIAL PRIMARY KEY,
-
     name VARCHAR(100) NOT NULL UNIQUE,
-
     description TEXT,
-
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
