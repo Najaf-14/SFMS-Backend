@@ -20,6 +20,8 @@ const feeGenerationRoutes = require("./src/routes/feeGenerationRoutes");
 const classFeeRoutes = require("./src/routes/classFeeRoutes");
 const paymentRoutes = require("./src/routes/paymentRoutes");
 const accountRoutes = require("./src/routes/accountRoutes");
+const ledgerRoutes = require("./src/routes/ledgerRoutes");
+const expenseRoutes = require("./src/routes/expenseRoutes");
 
 const { initDB } = require("./src/config/db");
 
@@ -34,6 +36,8 @@ app.use("/api/fees", feesRoutes);
 app.use("/api/billing", feeGenerationRoutes);
 app.use("/api/class-fees", classFeeRoutes);
 app.use("/api/accounts", accountRoutes);
+app.use("/api/ledger", ledgerRoutes);
+app.use("/api/expenses", expenseRoutes);
 
 //Test API
 app.get("/", (req, res) => {
