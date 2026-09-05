@@ -157,7 +157,6 @@ const getPaginatedInvoices = async ({
   let dataQuery = `
     SELECT 
       i.*,
-      f.family_id_code,
       f.father_parent_name,
       f.father_contact
     FROM invoices i
@@ -182,7 +181,7 @@ const getPaginatedInvoices = async ({
   if (search) {
     values.push(`%${search}%`);
     const searchIdx = values.length;
-    const searchCond = ` AND (i.challan_no ILIKE $${searchIdx} OR f.father_parent_name ILIKE $${searchIdx} OR f.family_id_code ILIKE $${searchIdx})`;
+    const searchCond = ` AND (i.challan_no ILIKE $${searchIdx} OR f.father_parent_name ILIKE $${searchIdx} OR CAST(f.id AS TEXT) ILIKE $${searchIdx})`;
     countQuery += searchCond;
     dataQuery += searchCond;
   }
@@ -209,7 +208,6 @@ const getInvoiceById = async (id) => {
   const invoiceQuery = `
     SELECT 
       i.*,
-      f.family_id_code,
       f.father_parent_name,
       f.mother_name,
       f.father_contact,
