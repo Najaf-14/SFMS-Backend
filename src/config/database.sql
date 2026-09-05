@@ -296,27 +296,17 @@ CREATE TABLE IF NOT EXISTS student_fee_overrides (
 
 CREATE TABLE IF NOT EXISTS invoices (
     id SERIAL PRIMARY KEY,
-
     challan_no VARCHAR(50) UNIQUE NOT NULL,
-
     family_id INT NOT NULL
         REFERENCES families(id)
         ON DELETE RESTRICT,
-
     billing_month VARCHAR(7) NOT NULL,
-
     due_date DATE NOT NULL,
-
     subtotal_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-
     concession_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-
     previous_arrears NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-
     total_payable NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-
     paid_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
-
     status VARCHAR(30) NOT NULL DEFAULT 'Unpaid'
         CHECK (
             status IN (
@@ -328,18 +318,13 @@ CREATE TABLE IF NOT EXISTS invoices (
                 'Waived'
             )
         ),
-
     generated_by INT
         REFERENCES users(id)
         ON DELETE SET NULL,
-
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
     UNIQUE(family_id, billing_month)
 );
-
 
 -- =========================================================
 -- 17. INVOICE ITEMS
@@ -448,6 +433,43 @@ CREATE TABLE IF NOT EXISTS expenses (
 
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
+
+-- =========================================================
+-- 20. CONCESSIONS ITEMS
+-- =========================================================
+CREATE TABLE IF NOT EXISTS concessions (
+  id SERIAL PRIMARY KEY,
+  concession_no VARCHAR(50) UNIQUE NOT NULL,
+  record_type VARCHAR(50) NOT NULL DEFAULT 'Concession', -- 'Concession' or 'Scholarship'
+  applies_to VARCHAR(50) NOT NULL DEFAULT 'Family', -- 'Family' or 'Student'
+  family_id INT NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+  student_id INT REFERENCES students(id) ON DELETE CASCADE,
+  scholarship_name VARCHAR(255),
+  discount_type VARCHAR(50) NOT NULL DEFAULT 'Percentage', -- 'Percentage' or 'Fixed'
+  value NUMERIC(10, 2) NOT NULL CHECK (value >= 0),
+  reason TEXT NOT NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'Active', -- 'Active', 'Inactive', 'Expired'
+  approval VARCHAR(50) NOT NULL DEFAULT 'Approved', -- 'Approved', 'Pending', 'Rejected'
+  start_date DATE,
+  end_date DATE,
+  remarks TEXT,
+  created_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS concession_audit_logs (
+  id SERIAL PRIMARY KEY,
+  concession_id INT REFERENCES concessions(id) ON DELETE CASCADE,
+  action VARCHAR(100) NOT NULL,
+  details TEXT NOT NULL,
+  performed_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_concessions_family ON concessions(family_id);
+CREATE INDEX IF NOT EXISTS idx_concessions_student ON concessions(student_id);
+CREATE INDEX IF NOT EXISTS idx_concessions_status ON concessions(status);
 
 -- =========================================================
 -- DATABASE INITIALIZATION COMPLETE
