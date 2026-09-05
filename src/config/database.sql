@@ -427,5 +427,29 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- =========================================================
+-- 20. EXPENSES ITEMS
+-- =========================================================
+CREATE TABLE IF NOT EXISTS expenses (
+  id SERIAL PRIMARY KEY,
+  expense_no VARCHAR(50) UNIQUE NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL, -- 'Utilities', 'Supplies', 'Maintenance', 'Salaries', 'Others'
+  amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+  payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash',
+  paid_to VARCHAR(255),
+  reference_no VARCHAR(100),
+  expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  remarks TEXT,
+  account_id INTEGER REFERENCES accounts(id) ON DELETE RESTRICT,
+  recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
+
+-- =========================================================
 -- DATABASE INITIALIZATION COMPLETE
 -- =========================================================
+
