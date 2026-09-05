@@ -474,4 +474,3 @@ CREATE INDEX IF NOT EXISTS idx_concessions_status ON concessions(status);
 -- =========================================================
 -- DATABASE INITIALIZATION COMPLETE
 -- =========================================================
-
