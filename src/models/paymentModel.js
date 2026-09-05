@@ -15,7 +15,7 @@ const recordInvoicePayment = async ({
 
     // 1. Fetch Invoice
     const invoiceRes = await client.query(
-      `SELECT id, family_id, total_payable, paid_amount, status 
+      `SELECT id, challan_no, family_id, total_payable, paid_amount, status 
        FROM invoices 
        WHERE id = $1 FOR UPDATE;`,
       [invoice_id],
@@ -43,7 +43,7 @@ const recordInvoicePayment = async ({
 
     if (currentPayment > remainingBalance) {
       throw new Error(
-        `Payment amount (Rs. ${currentPayment}) exceeds the remaining balance (Rs. ${remainingBalance}).`,
+        `Payment amount (Rs. ${currentPayment}) exceeds remaining balance (Rs. ${remainingBalance}).`,
       );
     }
 
@@ -53,7 +53,7 @@ const recordInvoicePayment = async ({
       nextStatus = "Paid";
     }
 
-    // 2. Generate Receipt Number (e.g. REC-202609-00001)
+    // 2. Generate Receipt Number
     const cleanDate = payment_date.replace(/-/g, "").slice(0, 6);
     const countRes = await client.query(`SELECT COUNT(*) FROM payments;`);
     const nextSeq = String(parseInt(countRes.rows[0].count, 10) + 1).padStart(
@@ -90,6 +90,34 @@ const recordInvoicePayment = async ({
        WHERE id = $3;`,
       [newPaidAmount, nextStatus, invoice.id],
     );
+
+    // 5. Match Account and Record Ledger Inflow
+    let accountType = "Cash";
+    if (payment_method.includes("Bank")) accountType = "Bank";
+    else if (payment_method.includes("JazzCash")) accountType = "JazzCash";
+    else if (payment_method.includes("Easypaisa")) accountType = "Easypaisa";
+
+    const accountRes = await client.query(
+      `SELECT id FROM accounts WHERE type = $1 AND is_active = TRUE ORDER BY id ASC LIMIT 1;`,
+      [accountType],
+    );
+
+    if (accountRes.rows.length > 0) {
+      const targetAccountId = accountRes.rows[0].id;
+      await client.query(
+        `INSERT INTO account_transactions (
+          account_id, amount, type, category, reference_id, description, transaction_date, created_by
+        ) VALUES ($1, $2, 'INFLOW', 'FEE_PAYMENT', $3, $4, $5, $6);`,
+        [
+          targetAccountId,
+          currentPayment,
+          receiptNo,
+          `Fee payment for challan ${invoice.challan_no}`,
+          payment_date,
+          user_id,
+        ],
+      );
+    }
 
     await client.query("COMMIT");
 
