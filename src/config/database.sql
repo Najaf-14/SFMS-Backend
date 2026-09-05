@@ -222,7 +222,6 @@ CREATE TABLE IF NOT EXISTS fee_components (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-
 -- =========================================================
 -- 13. CLASS FEE STRUCTURES
 -- =========================================================
