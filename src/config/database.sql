@@ -471,6 +471,29 @@ CREATE INDEX IF NOT EXISTS idx_concessions_family ON concessions(family_id);
 CREATE INDEX IF NOT EXISTS idx_concessions_student ON concessions(student_id);
 CREATE INDEX IF NOT EXISTS idx_concessions_status ON concessions(status);
 
+
+-- =========================================================
+-- 201 SETTINGS ITEMS
+-- =========================================================
+CREATE TABLE IF NOT EXISTS system_settings (
+  id INT PRIMARY KEY DEFAULT 1,
+  school_name VARCHAR(255) NOT NULL DEFAULT 'SKYLARKS Educational System',
+  phone VARCHAR(50) DEFAULT '051-1234567',
+  email VARCHAR(255) DEFAULT 'admin@skylarks.edu',
+  address TEXT DEFAULT 'Sector F-8, Main Boulevard, Islamabad',
+  bank_name VARCHAR(255) DEFAULT 'HBL (Habib Bank Limited)',
+  account_no VARCHAR(100) DEFAULT 'PK32 HABB 0000 1234 5678',
+  late_fee_per_day NUMERIC(10, 2) DEFAULT 50.00,
+  challan_instructions TEXT DEFAULT '1. Fee must be paid by the 10th of every month.
+2. Late fee of Rs. 50/day applies after due date.
+3. Fees are non-refundable.',
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT single_settings_row CHECK (id = 1)
+);
+
+-- Seed initial row
+INSERT INTO system_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
 -- =========================================================
 -- DATABASE INITIALIZATION COMPLETE
 -- =========================================================
