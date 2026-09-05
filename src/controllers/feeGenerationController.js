@@ -40,13 +40,15 @@ const fetchInvoices = async (req, res) => {
       status,
       search = "",
     } = req.query;
+
     const result = await getPaginatedInvoices({
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10),
+      page: parseInt(page, 10) || 1,
+      limit: parseInt(limit, 10) || 10,
       billing_month,
       status,
       search,
     });
+
     return res.json({ success: true, ...result });
   } catch (error) {
     return res.status(500).json({ error: error.message });
