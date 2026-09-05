@@ -13,7 +13,6 @@ const recordInvoicePayment = async ({
   try {
     await client.query("BEGIN");
 
-    // 1. Fetch Invoice
     const invoiceRes = await client.query(
       `SELECT id, challan_no, family_id, total_payable, paid_amount, status 
        FROM invoices 
@@ -53,7 +52,6 @@ const recordInvoicePayment = async ({
       nextStatus = "Paid";
     }
 
-    // 2. Generate Receipt Number
     const cleanDate = payment_date.replace(/-/g, "").slice(0, 6);
     const countRes = await client.query(`SELECT COUNT(*) FROM payments;`);
     const nextSeq = String(parseInt(countRes.rows[0].count, 10) + 1).padStart(
@@ -62,7 +60,6 @@ const recordInvoicePayment = async ({
     );
     const receiptNo = `REC-${cleanDate}-${nextSeq}`;
 
-    // 3. Insert Payment
     const paymentInsertQuery = `
       INSERT INTO payments (
         receipt_no, invoice_id, family_id, amount_paid,
@@ -86,7 +83,6 @@ const recordInvoicePayment = async ({
       user_id,
     ]);
 
-    // 4. Update Invoice Balance & Status
     await client.query(
       `UPDATE invoices 
        SET paid_amount = $1, status = $2, updated_at = CURRENT_TIMESTAMP 
@@ -94,7 +90,6 @@ const recordInvoicePayment = async ({
       [newPaidAmount, nextStatus, invoice.id],
     );
 
-    // 5. Match Account and Record Ledger Inflow
     let accountType = "Cash";
     if (payment_method.includes("Bank")) accountType = "Bank";
     else if (payment_method.includes("JazzCash")) accountType = "JazzCash";

@@ -1,11 +1,9 @@
 const { pool } = require("../config/db");
 
-// 1. Get Live Summary Dashboard Stats
 const getReportSummaryStats = async (req, res) => {
   try {
-    const currentMonth = new Date().toISOString().slice(0, 7); // e.g. '2026-09'
+    const currentMonth = new Date().toISOString().slice(0, 7);
 
-    // Total Revenue (Current Month Payments)
     const revRes = await pool.query(
       `SELECT COALESCE(SUM(amount_paid), 0) AS total_revenue
        FROM payments
@@ -13,7 +11,6 @@ const getReportSummaryStats = async (req, res) => {
       [currentMonth],
     );
 
-    // Pending Dues across unpaid / overdue invoices
     const duesRes = await pool.query(
       `SELECT 
         COALESCE(SUM(total_payable - paid_amount), 0) AS pending_dues,
@@ -22,7 +19,6 @@ const getReportSummaryStats = async (req, res) => {
        WHERE status IN ('Unpaid', 'Partially Paid', 'Overdue');`,
     );
 
-    // Active Students Count & Classes Count
     const stuRes = await pool.query(
       `SELECT 
         COUNT(*) FILTER (WHERE status = 'Active') AS active_students,
@@ -49,7 +45,6 @@ const getReportSummaryStats = async (req, res) => {
   }
 };
 
-// Helper: Convert array of objects to CSV string
 function jsonToCsv(headers, rows) {
   const headerLine = headers.map((h) => `"${h.label}"`).join(",");
   const dataLines = rows.map((row) =>
@@ -65,10 +60,9 @@ function jsonToCsv(headers, rows) {
   return [headerLine, ...dataLines].join("\n");
 }
 
-// 2. Export Fee Collections CSV
 const exportFeeCollections = async (req, res) => {
   try {
-    const { month } = req.query; // format 'YYYY-MM' (optional)
+    const { month } = req.query;
     const values = [];
     let query = `
       SELECT 
@@ -119,10 +113,9 @@ const exportFeeCollections = async (req, res) => {
   }
 };
 
-// 3. Export Defaulters / Pending Dues CSV
 const exportDefaulters = async (req, res) => {
   try {
-    const { status } = req.query; // 'unpaid', 'overdue', or 'all'
+    const { status } = req.query;
     const values = [];
     let query = `
       SELECT 
@@ -178,7 +171,6 @@ const exportDefaulters = async (req, res) => {
   }
 };
 
-// 4. Export Concessions & Scholarships CSV
 const exportConcessions = async (req, res) => {
   try {
     const query = `
@@ -236,7 +228,6 @@ const exportConcessions = async (req, res) => {
   }
 };
 
-// 5. Export Profit & Loss (P&L) Statement CSV
 const exportProfitAndLoss = async (req, res) => {
   try {
     const { start_date, end_date } = req.query;

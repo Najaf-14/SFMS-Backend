@@ -1,9 +1,5 @@
 const { pool } = require("../config/db");
 
-// ============================================================
-// GET CLASS BY ID
-// ============================================================
-
 const getClassById = async (classId) => {
   const result = await pool.query(
     `
@@ -17,10 +13,6 @@ const getClassById = async (classId) => {
   return result.rows[0] || null;
 };
 
-// ============================================================
-// CREATE CLASS WITH SECTIONS AND FEES
-// ============================================================
-
 const createClassWithFees = async ({
   name,
   sections = [],
@@ -32,7 +24,6 @@ const createClassWithFees = async ({
   try {
     await client.query("BEGIN");
 
-    // Create class
     const classResult = await client.query(
       `
       INSERT INTO classes (name)
@@ -44,7 +35,6 @@ const createClassWithFees = async ({
 
     const classData = classResult.rows[0];
 
-    // Create sections
     const createdSections = [];
 
     for (const sectionName of sections) {
@@ -63,7 +53,6 @@ const createClassWithFees = async ({
       createdSections.push(sectionResult.rows[0]);
     }
 
-    // Create fee structure
     let feeStructure = null;
     const createdFees = [];
 
@@ -82,7 +71,6 @@ const createClassWithFees = async ({
 
       feeStructure = structureResult.rows[0];
 
-      // Create fee items
       for (const fee of fees) {
         const feeResult = await client.query(
           `
@@ -116,10 +104,6 @@ const createClassWithFees = async ({
     client.release();
   }
 };
-
-// ============================================================
-// GET ALL CLASSES WITH FEES
-// ============================================================
 
 const getClassesWithFees = async ({
   page = 1,
@@ -238,10 +222,6 @@ const getClassesWithFees = async ({
   };
 };
 
-// ============================================================
-// GET SINGLE CLASS WITH FEES
-// ============================================================
-
 const getClassWithFees = async (classId, sessionId = null) => {
   const query = `
     SELECT
@@ -317,10 +297,6 @@ const getClassWithFees = async (classId, sessionId = null) => {
   return result.rows[0] || null;
 };
 
-// ============================================================
-// UPDATE CLASS WITH SECTIONS AND FEES
-// ============================================================
-
 const updateClassWithFees = async (
   classId,
   { name, sections = [], academic_session_id, fees = [] },
@@ -330,7 +306,6 @@ const updateClassWithFees = async (
   try {
     await client.query("BEGIN");
 
-    // Update class
     const classResult = await client.query(
       `
       UPDATE classes
@@ -345,7 +320,6 @@ const updateClassWithFees = async (
       throw new Error("Class not found.");
     }
 
-    // Delete old sections
     await client.query(
       `
       DELETE FROM sections
@@ -354,7 +328,6 @@ const updateClassWithFees = async (
       [classId],
     );
 
-    // Create updated sections
     const updatedSections = [];
 
     for (const sectionName of sections) {
@@ -448,17 +421,12 @@ const updateClassWithFees = async (
   }
 };
 
-// ============================================================
-// DELETE CLASS WITH ALL DATA
-// ============================================================
-
 const deleteClassWithData = async (classId) => {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // Delete fee items
     await client.query(
       `
       DELETE FROM class_fee_structure_items
@@ -471,7 +439,6 @@ const deleteClassWithData = async (classId) => {
       [classId],
     );
 
-    // Delete fee structures
     await client.query(
       `
       DELETE FROM class_fee_structures
@@ -480,7 +447,6 @@ const deleteClassWithData = async (classId) => {
       [classId],
     );
 
-    // Delete sections
     await client.query(
       `
       DELETE FROM sections
@@ -489,7 +455,6 @@ const deleteClassWithData = async (classId) => {
       [classId],
     );
 
-    // Delete class
     const result = await client.query(
       `
       DELETE FROM classes
@@ -515,10 +480,6 @@ const deleteClassWithData = async (classId) => {
   }
 };
 
-// ============================================================
-// CREATE SECTION
-// ============================================================
-
 const createSection = async (classId, name) => {
   const result = await pool.query(
     `
@@ -535,10 +496,6 @@ const createSection = async (classId, name) => {
   return result.rows[0];
 };
 
-// ============================================================
-// GET SECTIONS BY CLASS
-// ============================================================
-
 const getSectionsByClass = async (classId) => {
   const result = await pool.query(
     `
@@ -553,10 +510,6 @@ const getSectionsByClass = async (classId) => {
   return result.rows;
 };
 
-// ============================================================
-// GET SECTION BY ID
-// ============================================================
-
 const getSectionById = async (sectionId) => {
   const result = await pool.query(
     `
@@ -569,10 +522,6 @@ const getSectionById = async (sectionId) => {
 
   return result.rows[0] || null;
 };
-
-// ============================================================
-// UPDATE SECTION
-// ============================================================
 
 const updateSection = async (sectionId, name) => {
   const result = await pool.query(
@@ -587,10 +536,6 @@ const updateSection = async (sectionId, name) => {
 
   return result.rows[0] || null;
 };
-
-// ============================================================
-// DELETE SECTION
-// ============================================================
 
 const deleteSection = async (sectionId) => {
   const result = await pool.query(
@@ -607,13 +552,11 @@ const deleteSection = async (sectionId) => {
 
 module.exports = {
   getClassById,
-
   createClassWithFees,
   getClassesWithFees,
   getClassWithFees,
   updateClassWithFees,
   deleteClassWithData,
-
   createSection,
   getSectionsByClass,
   getSectionById,

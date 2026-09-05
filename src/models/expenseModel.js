@@ -16,7 +16,6 @@ const createExpense = async ({
   try {
     await client.query("BEGIN");
 
-    // 1. Generate Expense Number (e.g. EXP-202609-00001)
     const cleanDate = expense_date.replace(/-/g, "").slice(0, 6);
     const countRes = await client.query(`SELECT COUNT(*) FROM expenses;`);
     const nextSeq = String(parseInt(countRes.rows[0].count, 10) + 1).padStart(
@@ -25,7 +24,6 @@ const createExpense = async ({
     );
     const expenseNo = `EXP-${cleanDate}-${nextSeq}`;
 
-    // 2. Determine target account if not explicitly passed
     let targetAccountId = account_id;
     if (!targetAccountId) {
       let accountType = "Cash";
@@ -47,7 +45,6 @@ const createExpense = async ({
       }
     }
 
-    // 3. Insert Expense Record
     const insertExpenseQuery = `
       INSERT INTO expenses (
         expense_no, title, category, amount, payment_method,
@@ -70,7 +67,6 @@ const createExpense = async ({
       user_id,
     ]);
 
-    // 4. Log OUTFLOW into account_transactions for Ledger and Account Balances
     if (targetAccountId) {
       await client.query(
         `INSERT INTO account_transactions (
@@ -152,7 +148,6 @@ const getPaginatedExpenses = async ({
   const countRes = await pool.query(countQuery, values);
   const totalCount = parseInt(countRes.rows[0].count, 10);
 
-  // Total sum for current month/filter
   const sumRes = await pool.query(
     `SELECT COALESCE(SUM(amount), 0) AS total_sum FROM expenses;`,
   );
@@ -193,7 +188,6 @@ const updateExpense = async (
   try {
     await client.query("BEGIN");
 
-    // 1. Fetch existing expense
     const existingRes = await client.query(
       `SELECT * FROM expenses WHERE id = $1 FOR UPDATE;`,
       [id],
@@ -203,7 +197,6 @@ const updateExpense = async (
     }
     const oldExpense = existingRes.rows[0];
 
-    // 2. Resolve target account
     let targetAccountId = account_id || oldExpense.account_id;
     if (!targetAccountId && payment_method) {
       let accountType = "Cash";
@@ -225,7 +218,6 @@ const updateExpense = async (
     const newDate =
       expense_date !== undefined ? expense_date : oldExpense.expense_date;
 
-    // 3. Update Expense Table
     const updateQuery = `
       UPDATE expenses
       SET 
@@ -255,7 +247,6 @@ const updateExpense = async (
       id,
     ]);
 
-    // 4. Update the corresponding account_transactions outflow ledger
     await client.query(
       `UPDATE account_transactions
        SET 
@@ -290,7 +281,6 @@ const deleteExpense = async (id) => {
   try {
     await client.query("BEGIN");
 
-    // 1. Fetch expense details to identify transaction reference
     const expRes = await client.query(
       `SELECT * FROM expenses WHERE id = $1 FOR UPDATE;`,
       [id],
@@ -300,13 +290,11 @@ const deleteExpense = async (id) => {
     }
     const expense = expRes.rows[0];
 
-    // 2. Delete the ledger outflow entry
     await client.query(
       `DELETE FROM account_transactions WHERE reference_id = $1 AND type = 'OUTFLOW';`,
       [expense.expense_no],
     );
 
-    // 3. Delete the expense
     await client.query(`DELETE FROM expenses WHERE id = $1;`, [id]);
 
     await client.query("COMMIT");

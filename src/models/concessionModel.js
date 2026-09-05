@@ -1,6 +1,5 @@
 const { pool } = require("../config/db");
 
-// Helper to keep families.family_concession in sync
 const syncFamilyConcessionTotal = async (client, familyId) => {
   if (!familyId) return;
 
@@ -44,7 +43,6 @@ const createConcession = async ({
   try {
     await client.query("BEGIN");
 
-    // If applies_to is Student, resolve the student's family_id
     let resolvedFamilyId = family_id;
     if (applies_to === "Student" && student_id && !resolvedFamilyId) {
       const studentRes = await client.query(
@@ -60,7 +58,6 @@ const createConcession = async ({
       );
     }
 
-    // 1. Generate unique Concession/Scholarship code
     const prefix = record_type === "Scholarship" ? "SCH" : "CON";
     const cleanDate = new Date().toISOString().slice(0, 7).replace("-", "");
     const countRes = await client.query(
@@ -73,7 +70,6 @@ const createConcession = async ({
     );
     const concessionNo = `${prefix}-${cleanDate}-${nextSeq}`;
 
-    // 2. Insert Concession Record
     const query = `
       INSERT INTO concessions (
         concession_no, record_type, applies_to, family_id, student_id,
@@ -103,11 +99,8 @@ const createConcession = async ({
 
     const result = await client.query(query, values);
     const newRecord = result.rows[0];
-
-    // 3. Keep families.family_concession in sync
     await syncFamilyConcessionTotal(client, resolvedFamilyId);
 
-    // 4. Log to Audit Trail
     const targetLabel =
       applies_to === "Family"
         ? `Family #${resolvedFamilyId}`

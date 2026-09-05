@@ -9,13 +9,11 @@ const getLedgerSummaryAndTransactions = async ({
 }) => {
   const offset = (page - 1) * limit;
 
-  // 1. Calculate Base Opening Balance across all accounts
   const openBalRes = await pool.query(
     `SELECT COALESCE(SUM(opening_balance), 0) AS initial_opening FROM accounts WHERE is_active = TRUE;`,
   );
   let baseOpening = parseFloat(openBalRes.rows[0].initial_opening);
 
-  // If a date filter is applied, add net cash flow prior to start_date to opening balance
   if (start_date) {
     const priorTxnsRes = await pool.query(
       `SELECT 
@@ -30,7 +28,6 @@ const getLedgerSummaryAndTransactions = async ({
     baseOpening += priorInflows - priorOutflows;
   }
 
-  // 2. Aggregate Inflows & Outflows for the current filtered window
   const sumValues = [];
   let sumQuery = `
     SELECT 
@@ -54,7 +51,6 @@ const getLedgerSummaryAndTransactions = async ({
   const totalExpense = parseFloat(sumRes.rows[0].total_expense);
   const closingBalance = baseOpening + totalIncome - totalExpense;
 
-  // 3. Paginated Transactions Query
   const txnValues = [];
   let countQuery = `
     SELECT COUNT(*) 

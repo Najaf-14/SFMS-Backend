@@ -19,7 +19,6 @@ const { authorizeRoles } = require("../middleware/roleMiddleware");
 
 router.use(authenticateToken);
 
-// Classes & Sections
 router.post(
   "/classes",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "PRINCIPAL"),
@@ -34,7 +33,6 @@ router.post(
 );
 router.get("/classes/:classId/sections", fetchSectionsByClass);
 
-// Academic Sessions
 router.post(
   "/sessions",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "PRINCIPAL"),
@@ -48,7 +46,6 @@ router.patch(
   editAcademicSession,
 );
 
-// Bulk Promotion Transition
 router.post(
   "/promote",
   authorizeRoles("SUPER_ADMIN", "ADMIN", "PRINCIPAL"),

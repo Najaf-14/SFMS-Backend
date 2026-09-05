@@ -6,7 +6,6 @@ const {
   deleteFamily,
 } = require("../models/familyModel");
 
-// CREATE FAMILY
 const addFamily = async (req, res) => {
   try {
     const { father_parent_name, father_contact } = req.body;
@@ -39,7 +38,6 @@ const addFamily = async (req, res) => {
   }
 };
 
-// GET ALL FAMILIES
 const fetchFamilies = async (req, res) => {
   try {
     const { search = "", page = 1, limit = 10 } = req.query;
@@ -76,7 +74,6 @@ const fetchFamilies = async (req, res) => {
   }
 };
 
-// GET FAMILY BY ID
 const fetchFamilyById = async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -108,7 +105,6 @@ const fetchFamilyById = async (req, res) => {
   }
 };
 
-// UPDATE FAMILY
 const editFamily = async (req, res) => {
   try {
     const { id } = req.params;
@@ -137,7 +133,6 @@ const editFamily = async (req, res) => {
       is_active,
     } = req.body;
 
-    // Check required fields
     if (!father_parent_name || !father_parent_name.trim()) {
       return res.status(400).json({
         success: false,
@@ -152,7 +147,6 @@ const editFamily = async (req, res) => {
       });
     }
 
-    // Check family exists
     const existingFamily = await getFamilyById(id);
 
     if (!existingFamily) {
@@ -162,7 +156,6 @@ const editFamily = async (req, res) => {
       });
     }
 
-    // Update ALL fields
     const updatedFamily = await updateFamily(id, {
       father_parent_name,
       mother_name,
@@ -195,7 +188,6 @@ const editFamily = async (req, res) => {
   }
 };
 
-// DELETE / DEACTIVATE FAMILY
 const removeFamily = async (req, res) => {
   try {
     const id = Number(req.params.id);
