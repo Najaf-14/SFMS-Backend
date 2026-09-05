@@ -23,6 +23,7 @@ const accountRoutes = require("./src/routes/accountRoutes");
 const ledgerRoutes = require("./src/routes/ledgerRoutes");
 const expenseRoutes = require("./src/routes/expenseRoutes");
 const concessionRoutes = require("./src/routes/concessionRoutes");
+const reportRoutes = require("./src/routes/reportRoutes");
 
 const { initDB } = require("./src/config/db");
 
@@ -40,6 +41,7 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/ledger", ledgerRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/concessions", concessionRoutes);
+app.use("/api/reports", reportRoutes);
 
 //Test API
 app.get("/", (req, res) => {
