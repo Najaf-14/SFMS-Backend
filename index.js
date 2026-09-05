@@ -18,18 +18,19 @@ const feesRoutes = require("./src/routes/feeStructureRoutes");
 const feeGenerationRoutes = require("./src/routes/feeGenerationRoutes");
 
 const classFeeRoutes = require("./src/routes/classFeeRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
 
 const { initDB } = require("./src/config/db");
 
 // api routes
 app.use("/api/auth", authRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/families", familyRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/academic", academicRoutes);
 app.use("/api/fees", feesRoutes);
 app.use("/api/billing", feeGenerationRoutes);
-
 app.use("/api/class-fees", classFeeRoutes);
 
 //Test API
