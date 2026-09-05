@@ -19,6 +19,7 @@ const feeGenerationRoutes = require("./src/routes/feeGenerationRoutes");
 
 const classFeeRoutes = require("./src/routes/classFeeRoutes");
 const paymentRoutes = require("./src/routes/paymentRoutes");
+const accountRoutes = require("./src/routes/accountRoutes");
 
 const { initDB } = require("./src/config/db");
 
@@ -32,6 +33,7 @@ app.use("/api/academic", academicRoutes);
 app.use("/api/fees", feesRoutes);
 app.use("/api/billing", feeGenerationRoutes);
 app.use("/api/class-fees", classFeeRoutes);
+app.use("/api/accounts", accountRoutes);
 
 //Test API
 app.get("/", (req, res) => {
