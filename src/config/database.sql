@@ -366,5 +366,66 @@ CREATE TABLE IF NOT EXISTS invoice_items (
 
 
 -- =========================================================
+-- 18. PAYMENT ITEMS
+-- =========================================================
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  receipt_no VARCHAR(50) UNIQUE NOT NULL,
+  invoice_id INTEGER REFERENCES invoices(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  family_id INTEGER REFERENCES families(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  student_id INTEGER REFERENCES students(id) ON DELETE SET NULL ON UPDATE CASCADE,
+  amount_paid NUMERIC(10, 2) NOT NULL CHECK (amount_paid > 0),
+  payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash', -- 'Cash', 'Bank Transfer', 'Cheque', 'Online'
+  payment_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  reference_number VARCHAR(100),
+  notes TEXT,
+  received_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_invoice_id ON payments(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payments_family_id ON payments(family_id);
+CREATE INDEX IF NOT EXISTS idx_payments_payment_date ON payments(payment_date);
+
+-- =========================================================
+-- 19. ACCOUNTS ITEMS
+-- =========================================================
+CREATE TABLE IF NOT EXISTS accounts (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  type VARCHAR(50) NOT NULL DEFAULT 'Cash', -- 'Cash', 'Bank', 'JazzCash', 'Easypaisa'
+  account_number VARCHAR(100),
+  opening_balance NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS account_transactions (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
+  amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+  type VARCHAR(20) NOT NULL, -- 'INFLOW' or 'OUTFLOW'
+  category VARCHAR(50) NOT NULL, -- 'FEE_PAYMENT', 'EXPENSE', 'TRANSFER', 'MANUAL_INCOME', etc.
+  reference_id VARCHAR(100), -- receipt_no, expense_id, or challan_no
+  description TEXT,
+  transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_account_txns_account_id ON account_transactions(account_id);
+CREATE INDEX IF NOT EXISTS idx_account_txns_date ON account_transactions(transaction_date);
+
+-- Insert default accounts if table is empty
+INSERT INTO accounts (name, type, account_number, opening_balance)
+VALUES 
+  ('Main Cash Drawer', 'Cash', NULL, 0.00),
+  ('Meezan Bank (Main Campus)', 'Bank', '01020304050607', 0.00),
+  ('JazzCash Official', 'JazzCash', '03001234567', 0.00)
+ON CONFLICT DO NOTHING;
+
+-- =========================================================
 -- DATABASE INITIALIZATION COMPLETE
 -- =========================================================
