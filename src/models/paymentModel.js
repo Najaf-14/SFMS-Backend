@@ -69,7 +69,10 @@ const recordInvoicePayment = async ({
         payment_method, payment_date, reference_number, notes, received_by
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *;
+      RETURNING 
+        id, receipt_no, invoice_id, family_id, amount_paid,
+        payment_method, TO_CHAR(payment_date, 'YYYY-MM-DD') AS payment_date,
+        reference_number, notes, received_by, created_at;
     `;
     const paymentRes = await client.query(paymentInsertQuery, [
       receiptNo,
@@ -160,7 +163,17 @@ const getPaginatedPayments = async ({
 
   let dataQuery = `
     SELECT 
-      p.*,
+      p.id,
+      p.receipt_no,
+      p.invoice_id,
+      p.family_id,
+      p.student_id,
+      p.amount_paid,
+      p.payment_method,
+      TO_CHAR(p.payment_date, 'YYYY-MM-DD') AS payment_date,
+      p.reference_number,
+      p.notes,
+      p.created_at,
       f.father_parent_name,
       f.father_contact,
       i.challan_no,
@@ -223,7 +236,17 @@ const getPaginatedPayments = async ({
 const getPaymentByReceipt = async (receiptNo) => {
   const query = `
     SELECT 
-      p.*,
+      p.id,
+      p.receipt_no,
+      p.invoice_id,
+      p.family_id,
+      p.student_id,
+      p.amount_paid,
+      p.payment_method,
+      TO_CHAR(p.payment_date, 'YYYY-MM-DD') AS payment_date,
+      p.reference_number,
+      p.notes,
+      p.created_at,
       f.father_parent_name,
       f.mother_name,
       f.father_contact,
@@ -251,7 +274,7 @@ const getPaymentsByStudentId = async (studentId) => {
       p.receipt_no,
       p.amount_paid,
       p.payment_method,
-      p.payment_date,
+      TO_CHAR(p.payment_date, 'YYYY-MM-DD') AS payment_date,
       i.challan_no,
       i.billing_month,
       u.name AS received_by_user
